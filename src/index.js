@@ -18,7 +18,7 @@ app.get("/health", (_req, res) => {
     config: {
       openrouter_key: Boolean(process.env.OPENROUTER_API_KEY),
       kapso_key: Boolean(process.env.KAPSO_API_KEY),
-      modelo: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+      modelo: process.env.OPENROUTER_MODEL || "google/gemini-3.1-flash-lite",
       verify_token: Boolean(process.env.WEBHOOK_VERIFY_TOKEN),
       owner_phone: Boolean(process.env.OWNER_PHONE),
     },

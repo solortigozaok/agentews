@@ -23,7 +23,7 @@ Copia `.env.example` a `.env` y completa:
 ```
 OPENROUTER_API_KEY=   # tu key de OpenRouter
 KAPSO_API_KEY=        # tu key de Kapso
-OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_MODEL=google/gemini-3.1-flash-lite
 WEBHOOK_VERIFY_TOKEN=hybrid-asu-verify   # el que pongas también en Kapso/Meta
 OWNER_PHONE=+595993374814                # tu WhatsApp para los avisos
 PORT=3000

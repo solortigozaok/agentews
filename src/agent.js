@@ -132,7 +132,7 @@ export async function replyToMessage(from, userText, phoneNumberId) {
   history.push({ role: "user", content: userText });
 
   const { text } = await generateText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini"),
+    model: openrouter(process.env.OPENROUTER_MODEL || "google/gemini-3.1-flash-lite"),
     system: SYSTEM_PROMPT,
     messages: history,
     maxSteps: 4,

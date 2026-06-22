@@ -47,6 +47,9 @@ app.post("/webhook", async (req, res) => {
   // Responder rápido para que Kapso no reintente.
   res.sendStatus(200);
 
+  // Log del payload crudo para depurar el formato que envía Kapso.
+  console.log("WEBHOOK <<<", JSON.stringify(req.body));
+
   try {
     const messages = extractMessages(req.body);
     for (const msg of messages) {

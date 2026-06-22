@@ -21,6 +21,7 @@ app.get("/health", (_req, res) => {
       modelo: process.env.OPENROUTER_MODEL || "google/gemini-3.1-flash-lite",
       verify_token: Boolean(process.env.WEBHOOK_VERIFY_TOKEN),
       owner_phone: Boolean(process.env.OWNER_PHONE),
+      kapso_phone_number_id: Boolean(process.env.KAPSO_PHONE_NUMBER_ID),
     },
     agendados: listarClasesPrueba().length,
   });
@@ -65,7 +66,7 @@ function extractMessages(body) {
   for (const entry of entries) {
     for (const change of entry?.changes ?? []) {
       const value = change?.value;
-      const phoneNumberId = value?.metadata?.phone_number_id;
+      const phoneNumberId = value?.metadata?.phone_number_id ?? process.env.KAPSO_PHONE_NUMBER_ID;
       for (const m of value?.messages ?? []) {
         if (m.type === "text" && m.text?.body) {
           out.push({ from: m.from, text: m.text.body, phoneNumberId });

@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 
-const db = new Database("hybrid_asu.db");
+const db = new Database(process.env.DB_PATH || "hybrid_asu.db");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS clases_prueba (

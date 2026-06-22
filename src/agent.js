@@ -2,6 +2,7 @@ import { generateText, tool } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { z } from "zod";
 import { guardarClasePrueba } from "./db.js";
+import { sendWhatsAppText } from "./kapso.js";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -67,7 +68,27 @@ const agendarClasePrueba = tool({
 const conversations = new Map();
 const MAX_TURNS = 20;
 
-export async function replyToMessage(from, userText) {
+async function avisarDueno(phoneNumberId, args, from, id) {
+  const owner = process.env.OWNER_PHONE;
+  if (!owner || !phoneNumberId) return;
+  const msg =
+    `🎉 Nueva clase de prueba agendada (#${id})\n\n` +
+    `👤 Nombre: ${args.nombre}\n` +
+    `🎂 Edad: ${args.edad ?? "-"}\n` +
+    `🎯 Objetivo: ${args.objetivo ?? "-"}\n` +
+    `🏃 Nivel: ${args.nivel_actividad ?? "-"}\n` +
+    `💪 Modalidad: ${args.modalidad}\n` +
+    `📅 Día: ${args.dia} | 🕐 Horario: ${args.horario}\n` +
+    `📱 WhatsApp cliente: ${from}` +
+    (args.notas ? `\n📝 Notas: ${args.notas}` : "");
+  try {
+    await sendWhatsAppText(phoneNumberId, owner, msg);
+  } catch (err) {
+    console.error("No se pudo avisar al dueño:", err.message);
+  }
+}
+
+export async function replyToMessage(from, userText, phoneNumberId) {
   const history = conversations.get(from) ?? [];
   history.push({ role: "user", content: userText });
 
@@ -82,6 +103,7 @@ export async function replyToMessage(from, userText) {
         execute: async (args) => {
           const id = guardarClasePrueba({ ...args, telefono: from });
           console.log(`✅ Clase de prueba agendada (#${id}) para ${args.nombre} (${from})`);
+          await avisarDueno(phoneNumberId, args, from, id);
           return { ok: true, id };
         },
       },

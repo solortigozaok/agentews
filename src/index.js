@@ -33,7 +33,7 @@ app.post("/webhook", async (req, res) => {
   try {
     const messages = extractMessages(req.body);
     for (const msg of messages) {
-      const reply = await replyToMessage(msg.from, msg.text);
+      const reply = await replyToMessage(msg.from, msg.text, msg.phoneNumberId);
       await sendWhatsAppText(msg.phoneNumberId, msg.from, reply);
       console.log(`[${msg.from}] -> respondido`);
     }

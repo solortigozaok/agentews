@@ -2,12 +2,16 @@ import "dotenv/config";
 import express from "express";
 import { replyToMessage } from "./agent.js";
 import { sendWhatsAppText } from "./kapso.js";
+import { listarClasesPrueba } from "./db.js";
 
 const app = express();
 app.use(express.json());
 
 // Healthcheck simple
 app.get("/", (_req, res) => res.send("HYBRID ASU agent OK"));
+
+// Ver las clases de prueba agendadas (base de datos)
+app.get("/agendados", (_req, res) => res.json(listarClasesPrueba()));
 
 // Verificación del webhook (Meta/Kapso hacen un GET con hub.challenge al configurarlo)
 app.get("/webhook", (req, res) => {

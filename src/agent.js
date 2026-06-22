@@ -38,6 +38,12 @@ Es GRATIS. Tu meta es lograr agendarla. Cuando el cliente acepte y tengas al men
 la modalidad de interés y un día + horario, usa la herramienta "agendarClasePrueba" para
 registrar el agendamiento. Después confírmale con entusiasmo que quedó agendado.
 
+== LEAD QUE NO CONCRETA ==
+Si la persona mostró interés real pero NO logra agendar (dice que lo va a pensar, pide tiempo,
+se enfría, pone trabas o se despide sin agendar), usa la herramienta "avisarLeadSinAgendar"
+UNA sola vez por conversación para notificar al equipo y que puedan hacer seguimiento.
+No la uses si la persona solo saludó o aún están conversando con normalidad.
+
 == REGLAS ==
 - No inventes precios ni promociones; la clase de prueba es gratis, eso sí puedes afirmarlo.
 - Si falta algún dato para agendar, pídelo amablemente antes de usar la herramienta.
@@ -64,9 +70,25 @@ const agendarClasePrueba = tool({
   }),
 });
 
+const avisarLeadSinAgendar = tool({
+  description:
+    "Notifica al equipo que un interesado mostró interés pero NO logró agendar la clase de prueba, " +
+    "para hacer seguimiento. Úsala una sola vez por conversación.",
+  parameters: z.object({
+    nombre: z.string().optional().describe("Nombre del interesado si lo dio"),
+    modalidad: z.string().optional().describe("Modalidad que le interesaba"),
+    motivo: z
+      .string()
+      .describe("Por qué no concretó (lo va a pensar, falta de tiempo, duda de precio, etc.)"),
+    resumen: z.string().describe("Resumen breve de lo conversado y datos que se alcanzaron a captar"),
+  }),
+});
+
 // Memoria simple en RAM por número de teléfono (se reinicia al reiniciar el server).
 const conversations = new Map();
 const MAX_TURNS = 20;
+// Evita avisar más de una vez por el mismo lead que no concretó.
+const avisadosFrios = new Set();
 
 async function avisarDueno(phoneNumberId, args, from, id) {
   const owner = process.env.OWNER_PHONE;
@@ -88,6 +110,23 @@ async function avisarDueno(phoneNumberId, args, from, id) {
   }
 }
 
+async function avisarLeadFrio(phoneNumberId, args, from) {
+  const owner = process.env.OWNER_PHONE;
+  if (!owner || !phoneNumberId) return;
+  const msg =
+    `⚠️ Interesado que NO concretó (hacer seguimiento)\n\n` +
+    `👤 Nombre: ${args.nombre ?? "-"}\n` +
+    `💪 Modalidad: ${args.modalidad ?? "-"}\n` +
+    `🚧 Motivo: ${args.motivo}\n` +
+    `📝 Resumen: ${args.resumen}\n` +
+    `📱 WhatsApp cliente: ${from}`;
+  try {
+    await sendWhatsAppText(phoneNumberId, owner, msg);
+  } catch (err) {
+    console.error("No se pudo avisar lead frío:", err.message);
+  }
+}
+
 export async function replyToMessage(from, userText, phoneNumberId) {
   const history = conversations.get(from) ?? [];
   history.push({ role: "user", content: userText });
@@ -105,6 +144,16 @@ export async function replyToMessage(from, userText, phoneNumberId) {
           console.log(`✅ Clase de prueba agendada (#${id}) para ${args.nombre} (${from})`);
           await avisarDueno(phoneNumberId, args, from, id);
           return { ok: true, id };
+        },
+      },
+      avisarLeadSinAgendar: {
+        ...avisarLeadSinAgendar,
+        execute: async (args) => {
+          if (avisadosFrios.has(from)) return { ok: true, repetido: true };
+          avisadosFrios.add(from);
+          console.log(`⚠️ Lead sin agendar avisado: ${from}`);
+          await avisarLeadFrio(phoneNumberId, args, from);
+          return { ok: true };
         },
       },
     },

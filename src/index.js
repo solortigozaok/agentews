@@ -3,6 +3,7 @@ import express from "express";
 import { replyToMessage } from "./agent.js";
 import { sendWhatsAppText } from "./kapso.js";
 import { listarClasesPrueba } from "./db.js";
+import { extractMessages } from "./parse.js";
 
 const app = express();
 app.use(express.json());
@@ -61,24 +62,6 @@ app.post("/webhook", async (req, res) => {
     console.error("Error procesando webhook:", err);
   }
 });
-
-// Extrae los mensajes de texto del payload de la WhatsApp Cloud API.
-function extractMessages(body) {
-  const out = [];
-  const entries = body?.entry ?? [];
-  for (const entry of entries) {
-    for (const change of entry?.changes ?? []) {
-      const value = change?.value;
-      const phoneNumberId = value?.metadata?.phone_number_id ?? process.env.KAPSO_PHONE_NUMBER_ID;
-      for (const m of value?.messages ?? []) {
-        if (m.type === "text" && m.text?.body) {
-          out.push({ from: m.from, text: m.text.body, phoneNumberId });
-        }
-      }
-    }
-  }
-  return out;
-}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

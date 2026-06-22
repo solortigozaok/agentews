@@ -65,12 +65,34 @@ docker compose down
 - La base de datos se guarda en `./data/hybrid_asu.db` (volumen persistente), así
   que **no se pierde** aunque reconstruyas el contenedor.
 
-## Conectar el webhook de Kapso
+## HTTPS gratis con Cloudflare Tunnel
 
-1. Tu servidor debe ser accesible por HTTPS (usa un dominio o un proxy como Caddy/Nginx).
-2. En el dashboard de Kapso → tu número de WhatsApp → editar → **webhook destination URL**:
-   pon `https://TU-DOMINIO/webhook`.
-3. Usa el mismo `WEBHOOK_VERIFY_TOKEN` que tienes en el `.env`.
+No necesitás abrir puertos ni tener IP pública fija. El compose ya incluye
+`cloudflared` que conecta tu agente a Cloudflare automáticamente.
+
+### Crear el túnel (una sola vez en el dashboard de Cloudflare)
+
+1. Entrá a [Cloudflare Zero Trust](https://one.dash.cloudflare.com) → **Networks → Tunnels → Create a tunnel**.
+2. Elegí **Cloudflared** como conector, dale un nombre (ej. `hybrid-agent`).
+3. En la sección "Install and run a connector" copiá el **token** del comando
+   que te muestra (el string largo después de `--token`).
+4. Pegalo en el `.env`:
+   ```
+   CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoiM...token...
+   ```
+5. En la pestaña **Public Hostname** del túnel configurá:
+   - Subdomain: `hybrid` (o el que quieras)
+   - Domain: tu dominio en Cloudflare (ej. `tudominio.com`)
+   - Service → Type: `HTTP`, URL: `agente:3000`
+6. Guardá. Tu agente quedará accesible en `https://hybrid.tudominio.com`.
+
+### Conectar el webhook de Kapso
+
+En el dashboard de Kapso → tu número de WhatsApp → editar → **webhook destination URL**:
+```
+https://hybrid.tudominio.com/webhook
+```
+Usá el mismo `WEBHOOK_VERIFY_TOKEN` que tenés en el `.env`.
 
 ## Ver los agendamientos
 

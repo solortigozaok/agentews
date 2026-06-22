@@ -3,10 +3,19 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
-    ports:
-      - "3000:3000"
     volumes:
-      # Persiste la base de datos fuera del contenedor
       - ./data:/app/data
     environment:
       - DB_PATH=/app/data/hybrid_asu.db
+    # Solo accesible internamente (cloudflared enruta hacia él)
+    expose:
+      - "3000"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - agente

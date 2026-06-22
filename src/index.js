@@ -10,6 +10,22 @@ app.use(express.json());
 // Healthcheck simple
 app.get("/", (_req, res) => res.send("HYBRID ASU agent OK"));
 
+// Check de configuración (no expone las claves, solo si están presentes)
+app.get("/health", (_req, res) => {
+  res.json({
+    ok: true,
+    hora: new Date().toISOString(),
+    config: {
+      openrouter_key: Boolean(process.env.OPENROUTER_API_KEY),
+      kapso_key: Boolean(process.env.KAPSO_API_KEY),
+      modelo: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+      verify_token: Boolean(process.env.WEBHOOK_VERIFY_TOKEN),
+      owner_phone: Boolean(process.env.OWNER_PHONE),
+    },
+    agendados: listarClasesPrueba().length,
+  });
+});
+
 // Ver las clases de prueba agendadas (base de datos)
 app.get("/agendados", (_req, res) => res.json(listarClasesPrueba()));
 

@@ -7,15 +7,17 @@ services:
       - ./data:/app/data
     environment:
       - DB_PATH=/app/data/hybrid_asu.db
-    # Solo accesible internamente (cloudflared enruta hacia él)
-    expose:
-      - "3000"
+    # Publica el puerto solo en localhost: lo usa cloudflared (nativo de Windows)
+    ports:
+      - "127.0.0.1:3000:3000"
 
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      - agente
+  # OPCIONAL: usa este servicio SOLO si NO corres cloudflared nativo en el host.
+  # Si ya instalaste cloudflared como servicio de Windows, dejá esto comentado.
+  # tunnel:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: unless-stopped
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #   depends_on:
+  #     - agente

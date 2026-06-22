@@ -67,24 +67,31 @@ docker compose down
 
 ## HTTPS gratis con Cloudflare Tunnel
 
-No necesitás abrir puertos ni tener IP pública fija. El compose ya incluye
-`cloudflared` que conecta tu agente a Cloudflare automáticamente.
+No necesitás abrir puertos ni tener IP pública fija. Hay dos formas de correr el
+túnel; elegí UNA.
 
-### Crear el túnel (una sola vez en el dashboard de Cloudflare)
+### Opción A — cloudflared nativo en el host (Windows/Linux)
 
-1. Entrá a [Cloudflare Zero Trust](https://one.dash.cloudflare.com) → **Networks → Tunnels → Create a tunnel**.
-2. Elegí **Cloudflared** como conector, dale un nombre (ej. `hybrid-agent`).
-3. En la sección "Install and run a connector" copiá el **token** del comando
-   que te muestra (el string largo después de `--token`).
-4. Pegalo en el `.env`:
+1. Cloudflare Zero Trust → **Networks → Tunnels → Create a tunnel** → Cloudflared.
+2. Instalá el conector con el comando que te da Cloudflare, por ej. en Windows:
    ```
-   CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoiM...token...
+   cloudflared.exe service install <TU_TOKEN>
    ```
-5. En la pestaña **Public Hostname** del túnel configurá:
-   - Subdomain: `hybrid` (o el que quieras)
-   - Domain: tu dominio en Cloudflare (ej. `tudominio.com`)
-   - Service → Type: `HTTP`, URL: `agente:3000`
-6. Guardá. Tu agente quedará accesible en `https://hybrid.tudominio.com`.
+3. En la pestaña **Public Hostname** del túnel configurá:
+   - Subdomain: `hybrid` (o el que quieras) + tu dominio
+   - Service → Type: `HTTP`, URL: `http://localhost:3000`
+4. Corré el agente (publica en `127.0.0.1:3000`):
+   ```
+   docker compose up -d --build
+   ```
+   Dejá el servicio `tunnel` COMENTADO en `docker-compose.yml`.
+
+### Opción B — cloudflared dentro de Docker
+
+1. Creá el túnel igual que arriba y copiá el **token**.
+2. Pegalo en el `.env`: `CLOUDFLARE_TUNNEL_TOKEN=...`
+3. En **Public Hostname** del túnel: Service `HTTP` → URL `http://agente:3000`.
+4. Descomentá el servicio `tunnel` en `docker-compose.yml` y corré `docker compose up -d --build`.
 
 ### Conectar el webhook de Kapso
 
